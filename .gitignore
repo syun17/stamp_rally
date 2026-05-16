@@ -1,0 +1,35 @@
+# ========================
+# Go
+# ========================
+go_backend/bin/
+go_backend/*.exe
+go_backend/*.exe~
+go_backend/*.dll
+go_backend/*.so
+go_backend/*.dylib
+go_backend/*.test
+go_backend/*.out
+go_backend/vendor/
+
+# ========================
+# React / Node.js
+# ========================
+stamp_rally_front/node_modules/
+stamp_rally_front/dist/
+stamp_rally_front/.env
+stamp_rally_front/.env.local
+stamp_rally_front/.env.*.local
+
+# ========================
+# OS
+# ========================
+.DS_Store
+Thumbs.db
+
+# ========================
+# Editor
+# ========================
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
