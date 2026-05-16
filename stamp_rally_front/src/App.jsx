@@ -5,7 +5,7 @@ import Bingo from './components/Bingo';
 import Qr from './components/Qr';
 import Manual from './components/Manual';
 import Home from './components/Home';
-import Prize from './components/prize';
+import Prize from './components/Prize';
 
 const App = () => {
   return (
