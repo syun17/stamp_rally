@@ -1,23 +1,28 @@
-import React from 'react';
-import { BrowserRouter,Routes, Route } from 'react-router-dom';
+import { useState } from 'react';
+import './App.css';
+import Home from './Home';
+import Bingo from './Bingo';
+import Qr from './Qr';
+import Prize from './Prize';
+import Manual from './Manual';
 
-import Bingo from './components/Bingo';
-import Qr from './components/Qr';
-import Manual from './components/Manual';
-import Home from './components/Home';
-import Prize from './components/Prize';
+function App() {
+  const [currentScreen, setCurrentScreen] = useState('home');
 
-const App = () => {
+  // 画面遷移用の関数
+  const navigate = (screenName) => {
+    setCurrentScreen(screenName);
+  };
+
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/bingo" element={<Bingo />} />
-        <Route path="/qr" element={<Qr />} />
-        <Route path="/manual" element={<Manual />} />
-        <Route path="/prize" element={<Prize />} />
-        <Route path="/" element={<Home />} />
-      </Routes>
-    </BrowserRouter>
+    <div className="phone">
+      {currentScreen === 'home' && <Home navigate={navigate} />}
+      {currentScreen === 'bingo' && <Bingo navigate={navigate} currentScreen={currentScreen} />}
+      {currentScreen === 'qr' && <Qr navigate={navigate} currentScreen={currentScreen} />}
+      {currentScreen === 'prize' && <Prize navigate={navigate} currentScreen={currentScreen} />}
+      {currentScreen === 'manual' && <Manual navigate={navigate} />}
+    </div>
   );
-};
+}
+
 export default App;
