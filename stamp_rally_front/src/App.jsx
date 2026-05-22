@@ -16,11 +16,11 @@ function App() {
 
   return (
     <div className="phone">
-      {currentScreen === 'home' && <Home navigate={navigate} />}
+      {currentScreen === 'home' && <Home navigate={navigate} currentScreen={currentScreen} />}
       {currentScreen === 'bingo' && <Bingo navigate={navigate} currentScreen={currentScreen} />}
       {currentScreen === 'qr' && <Qr navigate={navigate} currentScreen={currentScreen} />}
       {currentScreen === 'prize' && <Prize navigate={navigate} currentScreen={currentScreen} />}
-      {currentScreen === 'manual' && <Manual navigate={navigate} />}
+      {currentScreen === 'manual' && <Manual navigate={navigate} currentScreen={currentScreen} />}
     </div>
   );
 }

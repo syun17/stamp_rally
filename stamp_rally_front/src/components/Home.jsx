@@ -1,7 +1,7 @@
-const Home = ({ navigate }) => {
+const Home = ({ navigate, currentScreen }) => {
   return (
     <div className="screen">
-      <div className="status-bar"><span>9:41</span><span>STAMP RALLY</span><span>●●●</span></div>
+      <div className="status-bar"><span>STAMP RALLY</span><span>●●●</span></div>
       <div className="stripe"></div>
       <div className="home-hero">
         <div className="hero-dots-deco"></div>
@@ -41,6 +41,27 @@ const Home = ({ navigate }) => {
       <div style={{ flex: 1 }}></div>
       <div className="big-btn clickable" onClick={() => navigate('bingo')}>スタート →</div>
       <div className="stripe"></div>
+      <div className="tab-bar">
+        <div className={`tab-item clickable ${currentScreen === 'bingo' ? 'active' : ''}`} onClick={() => navigate('bingo')}>
+          <svg className="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+            <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" />
+            <rect x="3" y="14" width="7" height="7" /><rect x="14" y="14" width="7" height="7" />
+          </svg>
+          ビンゴ
+        </div>
+        <div className={`tab-item clickable ${currentScreen === 'qr' ? 'active' : ''}`} onClick={() => navigate('qr')}>
+          <svg className="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" /><path d="M9 9h.01M15 9h.01M9 15h.01M15 15h.01M12 12h.01" />
+          </svg>
+          QR
+        </div>
+        <div className={`tab-item clickable ${currentScreen === 'prize' ? 'active' : ''}`} onClick={() => navigate('prize')}>
+          <svg className="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+            <path d="M20 12V22H4V12" /><path d="M22 7H2v5h20V7z" /><path d="M12 22V7" />
+          </svg>
+          景品
+        </div>
+      </div>
     </div>
   );
 };

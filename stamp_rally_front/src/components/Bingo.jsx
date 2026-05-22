@@ -101,7 +101,7 @@ const Bingo = ({ navigate, currentScreen }) => {
 
   return (
     <div className="screen">
-      <div className="status-bar"><span>9:41</span><span>STAMP RALLY</span><span>●●●</span></div>
+      <div className="status-bar"><span>STAMP RALLY</span><span>●●●</span></div>
       <div className="nav-bar" style={{ background: '#FFD900' }}>
         <div className="nav-back clickable" onClick={() => navigate('home')}>‹ ホーム</div>
         <div className="nav-title">スタンプカード</div>
