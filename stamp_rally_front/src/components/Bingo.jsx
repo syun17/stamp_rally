@@ -1,54 +1,43 @@
-import { useState, useEffect, useRef } from 'react'
-import '../App.css';
+import { useState, useEffect, useRef } from 'react';
+import '../App.css'; // 共通のCSSを読み込み
 
-const USER_ID = 'user_001'
+const USER_ID = 'user_001';
 
 // ビンゴグリッドの順番 (3x3, spot_id 1〜9)
 const GRID = [
   [1, 2, 3],
   [4, 5, 6],
   [7, 8, 9],
-]
+];
 
-// ビンゴライン定義
-const BINGO_LINES = [
-  [1, 2, 3], [4, 5, 6], [7, 8, 9],
-  [1, 4, 7], [2, 5, 8], [3, 6, 9],
-  [1, 5, 9], [3, 5, 7],
-]
-
-function isBingoLine(line, stampedSet) {
-  return line.every((id) => stampedSet.has(id))
-}
-
-function Bingo() {
-  const [spots, setSpots] = useState([])
-  const [bingo, setBingo] = useState({ stamped_ids: [], bingo_count: 0, bingo_lines: [], is_complete: false })
-  const [message, setMessage] = useState('')
-  const [nfcSupported, setNfcSupported] = useState(false)
-  const [nfcScanning, setNfcScanning] = useState(false)
-  const nfcAbortRef = useRef(null)
+const Bingo = ({ navigate, currentScreen }) => {
+  const [spots, setSpots] = useState([]);
+  const [bingo, setBingo] = useState({ stamped_ids: [], bingo_count: 0, bingo_lines: [], is_complete: false });
+  const [message, setMessage] = useState('');
+  const [nfcSupported, setNfcSupported] = useState(false);
+  const [nfcScanning, setNfcScanning] = useState(false);
+  const nfcAbortRef = useRef(null);
 
   // スポット一覧を取得
   useEffect(() => {
     fetch('/api/spots')
       .then((res) => res.json())
       .then((data) => setSpots(data))
-      .catch((err) => setMessage('スポット取得失敗: ' + err.message))
-  }, [])
+      .catch((err) => setMessage('スポット取得失敗: ' + err.message));
+  }, []);
 
   // ビンゴ状況を取得
   const fetchBingo = () => {
     fetch(`/api/bingo/${USER_ID}`)
       .then((res) => res.json())
       .then((data) => setBingo(data))
-      .catch((err) => setMessage('ビンゴ状況取得失敗: ' + err.message))
-  }
+      .catch((err) => setMessage('ビンゴ状況取得失敗: ' + err.message));
+  };
 
   useEffect(() => {
-    fetchBingo()
-    setNfcSupported('NDEFReader' in window)
-  }, [])
+    fetchBingo();
+    setNfcSupported('NDEFReader' in window);
+  }, []);
 
   // スタンプ取得（共通）
   const acquireStamp = async (body) => {
@@ -56,139 +45,189 @@ function Bingo() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
-    })
-    const data = await res.json()
+    });
+    const data = await res.json();
     if (res.status === 201) {
-      setMessage('スタンプを取得しました！')
-      fetchBingo()
+      setMessage('スタンプを取得しました！');
+      fetchBingo();
     } else if (res.status === 409) {
-      setMessage('このスポットはすでにスタンプ済みです')
+      setMessage('このスポットはすでにスタンプ済みです');
     } else {
-      setMessage('エラー: ' + (data.error ?? '不明なエラー'))
+      setMessage('エラー: ' + (data.error ?? '不明なエラー'));
     }
-  }
+  };
 
   // NFCスキャン開始
   const startNfcScan = async () => {
-    if (!nfcSupported) return
+    if (!nfcSupported) return;
     try {
-      const ndef = new window.NDEFReader()
-      const controller = new AbortController()
-      nfcAbortRef.current = controller
+      const ndef = new window.NDEFReader();
+      const controller = new AbortController();
+      nfcAbortRef.current = controller;
 
-      await ndef.scan({ signal: controller.signal })
-      setNfcScanning(true)
-      setMessage('NFCタグをスマートフォンにかざしてください')
+      await ndef.scan({ signal: controller.signal });
+      setNfcScanning(true);
+      setMessage('NFCタグをスマートフォンにかざしてください');
 
       ndef.addEventListener('reading', ({ serialNumber }) => {
         // シリアルナンバー（UID）をコロン区切り大文字に正規化
-        const uid = serialNumber.toUpperCase().replace(/-/g, ':')
-        setMessage(`NFCタグ検出: ${uid}`)
-        acquireStamp({ user_id: USER_ID, nfc_uid: uid })
-      })
+        const uid = serialNumber.toUpperCase().replace(/-/g, ':');
+        setMessage(`NFCタグ検出: ${uid}`);
+        acquireStamp({ user_id: USER_ID, nfc_uid: uid });
+      });
     } catch (err) {
-      setMessage('NFCスキャン失敗: ' + err.message)
-      setNfcScanning(false)
+      setMessage('NFCスキャン失敗: ' + err.message);
+      setNfcScanning(false);
     }
-  }
+  };
 
   // NFCスキャン停止
   const stopNfcScan = () => {
     if (nfcAbortRef.current) {
-      nfcAbortRef.current.abort()
-      nfcAbortRef.current = null
+      nfcAbortRef.current.abort();
+      nfcAbortRef.current = null;
     }
-    setNfcScanning(false)
-    setMessage('NFCスキャンを停止しました')
-  }
+    setNfcScanning(false);
+    setMessage('NFCスキャンを停止しました');
+  };
 
-  const stampedSet = new Set(bingo.stamped_ids ?? [])
-  const completedLineSet = new Set((bingo.bingo_lines ?? []).flat())
+  const stampedSet = new Set(bingo.stamped_ids ?? []);
+  const completedLineSet = new Set((bingo.bingo_lines ?? []).flat());
+  const spotMap = Object.fromEntries(spots.map((s) => [s.id, s]));
 
-  const spotMap = Object.fromEntries(spots.map((s) => [s.id, s]))
+  // 進捗率の計算
+  const totalSpots = spots.length > 0 ? spots.length : 9;
+  const progressPercent = Math.min(100, (stampedSet.size / totalSpots) * 100);
 
   return (
-    <div style={{ maxWidth: 480, margin: '2rem auto', fontFamily: 'sans-serif', padding: '0 1rem' }}>
-      <h1 style={{ textAlign: 'center' }}>スタンプラリー ビンゴ</h1>
-      <p style={{ textAlign: 'center', color: '#555' }}>ユーザーID: <strong>{USER_ID}</strong></p>
-
-      {/* ビンゴ達成表示 */}
-      {bingo.bingo_count > 0 && (
-        <div style={{ background: '#fff3cd', border: '2px solid #ffc107', borderRadius: 8, padding: '0.75rem 1rem', marginBottom: '1rem', textAlign: 'center', fontWeight: 'bold' }}>
-          {bingo.is_complete ? '🎉 全スポット制覇！' : `🎯 ビンゴ ${bingo.bingo_count} ライン達成！`}
-        </div>
-      )}
-
-      {/* メッセージ */}
-      {message && (
-        <div style={{ background: '#f0f0f0', padding: '0.5rem 1rem', borderRadius: 4, marginBottom: '1rem', fontSize: '0.9rem' }}>
-          {message}
-        </div>
-      )}
-
-      {/* NFCボタン */}
-      {nfcSupported ? (
-        <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-          {nfcScanning ? (
-            <button onClick={stopNfcScan} style={{ background: '#dc3545', color: '#fff', border: 'none', borderRadius: 8, padding: '0.75rem 2rem', fontSize: '1rem', cursor: 'pointer' }}>
-              NFCスキャン停止
-            </button>
-          ) : (
-            <button onClick={startNfcScan} style={{ background: '#0d6efd', color: '#fff', border: 'none', borderRadius: 8, padding: '0.75rem 2rem', fontSize: '1rem', cursor: 'pointer' }}>
-              NFCスキャン開始
-            </button>
+    <div className="screen">
+      <div className="status-bar"><span>9:41</span><span>STAMP RALLY</span><span>●●●</span></div>
+      <div className="nav-bar" style={{ background: '#FFD900' }}>
+        <div className="nav-back clickable" onClick={() => navigate('home')}>‹ ホーム</div>
+        <div className="nav-title">スタンプカード</div>
+        <div style={{ width: '36px' }}></div>
+      </div>
+      
+      <div style={{ background: '#FAFAFA', flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+        
+        {/* メッセージ領域 */}
+        <div style={{ padding: '12px 12px 0' }}>
+          {bingo.bingo_count > 0 && (
+            <div style={{ background: '#FFD900', border: '2.5px solid #111', borderRadius: 8, padding: '8px', marginBottom: '8px', textAlign: 'center', fontSize: '11px', fontWeight: '900', boxShadow: '2px 2px 0 #111' }}>
+              {bingo.is_complete ? '🎉 全スポット制覇おめでとう！' : `🎯 ビンゴ ${bingo.bingo_count} ライン達成！`}
+            </div>
+          )}
+          {message && (
+            <div style={{ background: '#FFF', border: '2.5px solid #111', borderRadius: 8, padding: '8px', marginBottom: '4px', fontSize: '10px', fontWeight: '800', color: '#111' }}>
+              ℹ️ {message}
+            </div>
+          )}
+          {!nfcSupported && (
+            <div style={{ color: '#FF2D8B', fontSize: '9px', fontWeight: '800', textAlign: 'center', marginTop: '4px' }}>
+              ※ この端末・ブラウザはWeb NFCに未対応です
+            </div>
           )}
         </div>
-      ) : (
-        <p style={{ textAlign: 'center', color: '#999', fontSize: '0.85rem' }}>
-          ※ このブラウザはWeb NFCに未対応です（Android Chrome が必要）
-        </p>
-      )}
 
-      {/* ビンゴグリッド */}
-      {spots.length > 0 && (
-        <div>
-          <h2 style={{ textAlign: 'center', marginBottom: '0.5rem' }}>ビンゴカード</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-            {GRID.flat().map((spotId) => {
-              const spot = spotMap[spotId]
-              const stamped = stampedSet.has(spotId)
-              const onBingoLine = completedLineSet.has(spotId)
-              return (
-                <div
-                  key={spotId}
-                  style={{
-                    border: onBingoLine ? '2px solid #ffc107' : '1px solid #ccc',
-                    borderRadius: 8,
-                    padding: '0.75rem 0.5rem',
-                    textAlign: 'center',
-                    background: stamped ? (onBingoLine ? '#fff3cd' : '#e6f4ea') : '#fafafa',
-                    position: 'relative',
-                  }}
-                >
-                  <div style={{ fontSize: '0.75rem', color: '#666', marginBottom: 4 }}>
-                    No.{spotId}
+        {/* ビンゴグリッド */}
+        <div className="bingo-grid">
+          {GRID.flat().map((spotId) => {
+            const spot = spotMap[spotId];
+            const stamped = stampedSet.has(spotId);
+            const onBingoLine = completedLineSet.has(spotId);
+            
+            return (
+              <div 
+                key={spotId} 
+                className={`b-cell ${stamped ? 'done' : ''}`}
+                style={onBingoLine ? { borderColor: '#FF5F00', background: '#FFD900' } : {}}
+              >
+                {stamped ? (
+                  <div className="stamp-dot filled">
+                    <svg className="check-mark" viewBox="0 0 16 16"><polyline points="3,8 7,12 13,4" /></svg>
                   </div>
-                  <div style={{ fontSize: '0.85rem', fontWeight: 'bold', lineHeight: 1.3 }}>
-                    {spot ? spot.name : '?'}
-                  </div>
-                  {stamped && (
-                    <div style={{ fontSize: '1.5rem', position: 'absolute', top: 4, right: 6 }}>
-                      ✅
-                    </div>
-                  )}
-                </div>
-              )
-            })}
-          </div>
-          <p style={{ textAlign: 'center', marginTop: '0.75rem', color: '#555' }}>
-            取得済み: {stampedSet.size} / {spots.length} スポット
-          </p>
+                ) : (
+                  <div className="stamp-dot"></div>
+                )}
+                {spot ? spot.name : `No.${spotId}`}
+              </div>
+            );
+          })}
         </div>
-      )}
+
+        {/* 進捗バー */}
+        <div className="progress-row">
+          <span className="progress-txt">{stampedSet.size}/{totalSpots}</span>
+          <div className="progress-bar">
+            <div className="progress-fill" style={{ width: `${progressPercent}%` }}></div>
+          </div>
+          <span className="progress-txt" style={{ color: '#FF5F00' }}>
+            {stampedSet.size >= totalSpots ? 'コンプリート!' : `あと${totalSpots - stampedSet.size}つ!`}
+          </span>
+        </div>
+
+        {/* アクションボタン */}
+        <div className="action-row">
+          <div 
+            className="act-btn qr clickable" 
+            onClick={nfcScanning ? stopNfcScan : startNfcScan}
+            style={{ background: nfcScanning ? '#FF2D8B' : '#00D4D4', color: nfcScanning ? '#FFF' : '#111' }}
+          >
+            <svg className="act-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              {nfcScanning ? (
+                <>
+                  <rect x="3" y="3" width="18" height="18" rx="2" />
+                  <line x1="9" y1="9" x2="15" y2="15" /><line x1="15" y1="9" x2="9" y2="15" />
+                </>
+              ) : (
+                <>
+                  <path d="M4 4h4v4H4zM16 4h4v4h-4zM4 16h4v4H4zM12 12h.01" />
+                  <path d="M12 4v16M4 12h16" opacity="0.3" />
+                </>
+              )}
+            </svg>
+            {nfcScanning ? 'スキャン停止' : 'NFC読込'}
+          </div>
+          <div className="act-btn prize clickable" onClick={() => navigate('prize')}>
+            <svg className="act-icon" viewBox="0 0 24 24" fill="none" stroke="#FFF" strokeWidth="2.5" strokeLinecap="round">
+              <path d="M20 12V22H4V12" /><path d="M22 7H2v5h20V7z" /><path d="M12 22V7" />
+            </svg>
+            景品
+          </div>
+          <div className="act-btn info clickable" onClick={() => navigate('manual')}>
+            <svg className="act-icon" viewBox="0 0 24 24" fill="none" stroke="#FFF" strokeWidth="2.5" strokeLinecap="round">
+              <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            説明
+          </div>
+        </div>
+        <div style={{ flex: 1 }}></div>
+      </div>
+      
+      {/* タブバー */}
+      <div className="tab-bar">
+        <div className={`tab-item clickable ${currentScreen === 'bingo' ? 'active' : ''}`} onClick={() => navigate('bingo')}>
+          <svg className="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+            <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" />
+            <rect x="3" y="14" width="7" height="7" /><rect x="14" y="14" width="7" height="7" />
+          </svg>
+          ビンゴ
+        </div>
+        <div className={`tab-item clickable ${currentScreen === 'qr' ? 'active' : ''}`} onClick={() => navigate('qr')}>
+          <svg className="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" /><path d="M9 9h.01M15 9h.01M9 15h.01M15 15h.01M12 12h.01" />
+          </svg>
+          QR
+        </div>
+        <div className={`tab-item clickable ${currentScreen === 'prize' ? 'active' : ''}`} onClick={() => navigate('prize')}>
+          <svg className="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+            <path d="M20 12V22H4V12" /><path d="M22 7H2v5h20V7z" /><path d="M12 22V7" />
+          </svg>
+          景品
+        </div>
+      </div>
     </div>
-  )
-}
+  );
+};
 
-export default Bingo
-
+export default Bingo;

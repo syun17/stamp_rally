@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import './App.css';
-import Home from './Home';
-import Bingo from './Bingo';
-import Qr from './Qr';
-import Prize from './Prize';
-import Manual from './Manual';
+import Home from "./components/Home";
+import Bingo from "./components/Bingo";
+import Qr from "./components/Qr";
+import Prize from "./components/Prize";
+import Manual from "./components/Manual";
 
 function App() {
   const [currentScreen, setCurrentScreen] = useState('home');
