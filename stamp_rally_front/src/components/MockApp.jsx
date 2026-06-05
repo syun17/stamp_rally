@@ -1,15 +1,14 @@
 import { useState } from 'react';
-import './App.css';
-import Home from "./components/Home";
-import Bingo from "./components/Bingo";
-import Qr from "./components/Qr";
-import Prize from "./components/Prize";
-import Manual from "./components/Manual";
+import '../App.css';
+import Home from "./mocks/Home";
+import Bingo from "./mocks/Bingo";
+import Qr from "./mocks/Qr";
+import Prize from "./mocks/Prize";
+import Manual from "./mocks/Manual";
 
-function App() {
+function MockApp() {
   const [currentScreen, setCurrentScreen] = useState('home');
 
-  // 画面遷移用の関数
   const navigate = (screenName) => {
     setCurrentScreen(screenName);
   };
@@ -58,4 +57,4 @@ function App() {
   );
 }
 
-export default App;
+export default MockApp;
