@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import '../App.css'; // 共通のCSSを読み込み
+import '../../App.css'; // 共通のCSSを読み込み
 
 const USER_ID = 'user_001';
 
